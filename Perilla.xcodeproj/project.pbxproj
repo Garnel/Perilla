@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4ECE0F561E261C1400666AE6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4ECE0F551E261C1400666AE6 /* main.cpp */; };
+		4ECE0F601E26279C00666AE6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4ECE0F5F1E26279C00666AE6 /* main.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +24,12 @@
 
 /* Begin PBXFileReference section */
 		4ECE0F521E261C1400666AE6 /* Perilla */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Perilla; sourceTree = BUILT_PRODUCTS_DIR; };
-		4ECE0F551E261C1400666AE6 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		4ECE0F5C1E261C6C00666AE6 /* Lexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Lexer.h; sourceTree = "<group>"; };
+		4ECE0F5D1E261C6C00666AE6 /* Token.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Token.h; sourceTree = "<group>"; };
+		4ECE0F5F1E26279C00666AE6 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		4ECE0F611E27689E00666AE6 /* AST.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AST.h; sourceTree = "<group>"; };
+		4ECE0F621E28CE0000666AE6 /* OperatorPrecedence.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OperatorPrecedence.h; sourceTree = "<group>"; };
+		4ECE0F641E2A0F6200666AE6 /* Utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,7 +62,12 @@
 		4ECE0F541E261C1400666AE6 /* Perilla */ = {
 			isa = PBXGroup;
 			children = (
-				4ECE0F551E261C1400666AE6 /* main.cpp */,
+				4ECE0F5C1E261C6C00666AE6 /* Lexer.h */,
+				4ECE0F5D1E261C6C00666AE6 /* Token.h */,
+				4ECE0F5F1E26279C00666AE6 /* main.cpp */,
+				4ECE0F611E27689E00666AE6 /* AST.h */,
+				4ECE0F621E28CE0000666AE6 /* OperatorPrecedence.h */,
+				4ECE0F641E2A0F6200666AE6 /* Utils.h */,
 			);
 			path = Perilla;
 			sourceTree = "<group>";
@@ -119,7 +129,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4ECE0F561E261C1400666AE6 /* main.cpp in Sources */,
+				4ECE0F601E26279C00666AE6 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,6 +226,59 @@
 		4ECE0F5A1E261C1400666AE6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = /usr/local/Cellar/llvm/3.9.1/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/Cellar/llvm/3.9.1/lib;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-stdlib=libc++",
+					"-fPIC",
+					"-fvisibility-inlines-hidden",
+					"-Wall",
+					"-W",
+					"-Wno-unused-parameter",
+					"-Wwrite-strings",
+					"-Wcast-qual",
+					"-Wmissing-field-initializers",
+					"-pedantic",
+					"-Wno-long-long",
+					"-Wcovered-switch-default",
+					"-Wnon-virtual-dtor",
+					"-Wdelete-non-virtual-dtor",
+					"-Werror=date-time",
+					"-std=c++11",
+					"-DNDEBUG",
+					"-D__STDC_CONSTANT_MACROS",
+					"-D__STDC_FORMAT_MACROS",
+					"-D__STDC_LIMIT_MACROS\n-stdlib=libc++",
+					"-fPIC",
+					"-fvisibility-inlines-hidden",
+					"-Wall",
+					"-W",
+					"-Wno-unused-parameter",
+					"-Wwrite-strings",
+					"-Wcast-qual",
+					"-Wmissing-field-initializers",
+					"-pedantic",
+					"-Wno-long-long",
+					"-Wcovered-switch-default",
+					"-Wnon-virtual-dtor",
+					"-Wdelete-non-virtual-dtor",
+					"-Werror=date-time",
+					"-std=c++11",
+					"-DNDEBUG",
+					"-D__STDC_CONSTANT_MACROS",
+					"-D__STDC_FORMAT_MACROS",
+					"-D__STDC_LIMIT_MACROS",
+					"-Wl,-search_paths_first",
+					"-Wl,-headerpad_max_install_names",
+				);
+				OTHER_LDFLAGS = (
+					"-lLLVMCore",
+					"-lLLVMSupport",
+					"-lcurses",
+					"-lz",
+					"-lm",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -223,6 +286,59 @@
 		4ECE0F5B1E261C1400666AE6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = /usr/local/Cellar/llvm/3.9.1/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/Cellar/llvm/3.9.1/lib;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-stdlib=libc++",
+					"-fPIC",
+					"-fvisibility-inlines-hidden",
+					"-Wall",
+					"-W",
+					"-Wno-unused-parameter",
+					"-Wwrite-strings",
+					"-Wcast-qual",
+					"-Wmissing-field-initializers",
+					"-pedantic",
+					"-Wno-long-long",
+					"-Wcovered-switch-default",
+					"-Wnon-virtual-dtor",
+					"-Wdelete-non-virtual-dtor",
+					"-Werror=date-time",
+					"-std=c++11",
+					"-DNDEBUG",
+					"-D__STDC_CONSTANT_MACROS",
+					"-D__STDC_FORMAT_MACROS",
+					"-D__STDC_LIMIT_MACROS\n-stdlib=libc++",
+					"-fPIC",
+					"-fvisibility-inlines-hidden",
+					"-Wall",
+					"-W",
+					"-Wno-unused-parameter",
+					"-Wwrite-strings",
+					"-Wcast-qual",
+					"-Wmissing-field-initializers",
+					"-pedantic",
+					"-Wno-long-long",
+					"-Wcovered-switch-default",
+					"-Wnon-virtual-dtor",
+					"-Wdelete-non-virtual-dtor",
+					"-Werror=date-time",
+					"-std=c++11",
+					"-DNDEBUG",
+					"-D__STDC_CONSTANT_MACROS",
+					"-D__STDC_FORMAT_MACROS",
+					"-D__STDC_LIMIT_MACROS",
+					"-Wl,-search_paths_first",
+					"-Wl,-headerpad_max_install_names",
+				);
+				OTHER_LDFLAGS = (
+					"-lLLVMCore",
+					"-lLLVMSupport",
+					"-lcurses",
+					"-lz",
+					"-lm",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
