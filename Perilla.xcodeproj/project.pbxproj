@@ -249,7 +249,8 @@
 					"-DNDEBUG",
 					"-D__STDC_CONSTANT_MACROS",
 					"-D__STDC_FORMAT_MACROS",
-					"-D__STDC_LIMIT_MACROS\n-stdlib=libc++",
+					"-D__STDC_LIMIT_MACROS",
+					"-stdlib=libc++",
 					"-fPIC",
 					"-fvisibility-inlines-hidden",
 					"-Wall",
@@ -269,8 +270,6 @@
 					"-D__STDC_CONSTANT_MACROS",
 					"-D__STDC_FORMAT_MACROS",
 					"-D__STDC_LIMIT_MACROS",
-					"-Wl,-search_paths_first",
-					"-Wl,-headerpad_max_install_names",
 				);
 				OTHER_LDFLAGS = (
 					"-lLLVMCore",
@@ -309,7 +308,8 @@
 					"-DNDEBUG",
 					"-D__STDC_CONSTANT_MACROS",
 					"-D__STDC_FORMAT_MACROS",
-					"-D__STDC_LIMIT_MACROS\n-stdlib=libc++",
+					"-D__STDC_LIMIT_MACROS",
+					"-stdlib=libc++",
 					"-fPIC",
 					"-fvisibility-inlines-hidden",
 					"-Wall",
@@ -329,8 +329,6 @@
 					"-D__STDC_CONSTANT_MACROS",
 					"-D__STDC_FORMAT_MACROS",
 					"-D__STDC_LIMIT_MACROS",
-					"-Wl,-search_paths_first",
-					"-Wl,-headerpad_max_install_names",
 				);
 				OTHER_LDFLAGS = (
 					"-lLLVMCore",

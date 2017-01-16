@@ -9,35 +9,26 @@ namespace Perilla {
     public:
         static int Get(char op) 
         {
-            if (stdLut.find(op) != stdLut.end()) {
-                return stdLut.at(op);
-            } else if (userLut.find(op) != userLut.end()) {
-                return userLut.at(op);
+            if (lut.find(op) != lut.end()) {
+                return lut.at(op);
             } else {
-                return 0;
+                return -1;
             }
-        }
-        
-        static void Set(char op, int precedence) {
-            userLut[op] = precedence;
         }
         
         static bool Support(char op)
         {
-            return stdLut.find(op) != stdLut.end() || userLut.find(op) != userLut.end();
+            return lut.find(op) != lut.end();
         }
 
     private:
-        static const unordered_map<char, int> stdLut;
-        static unordered_map<char, int> userLut;
+        static const unordered_map<char, int> lut;
     };
     
-    const unordered_map<char, int> BinaryOperatorPrecedence::stdLut = {
+    const unordered_map<char, int> BinaryOperatorPrecedence::lut = {
         {'<', 100},
         {'+', 200},
         {'-', 200},
         {'*', 400}
     };
-    
-    unordered_map<char, int> BinaryOperatorPrecedence::userLut = {};
 }

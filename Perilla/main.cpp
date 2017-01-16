@@ -17,25 +17,32 @@ int main()
 //fib(5)
 //)CODE";
     
-    string src = R"CODE(
-extern sin(x)
+//    string src = R"CODE(
+//extern sin(x)
+//
+//def bar(a)
+//    a + 100
+//
+//def foo(x y)
+//    sin(x) * bar(y)
+//
+//1 + foo(2, 3)+(4 + 5.5555)* 6  * 7.777 - 8.8
+//sin(0)
+//    
+//def test(x) (1+2+x) * (x + (1+2))
+//)CODE";
 
-def bar(a)
-    a + 100
+    string src = "def test(x) (123+2+x) * (x + (123+2))";
 
-def foo(x y)
-    sin(x) * bar(y)
-
-1 + foo(2, 3)+(4 + 5.5555)* 6  * 7.777 - 8.8
-sin(0)
-)CODE";
-    
     StringLexer lexer(src);
-    lexer.Run();
-    lexer.PrintTokens();
+    Token token = lexer.NextToken();
+    while (token != Token::Eof) {
+        cout << token << endl;
+        token = lexer.NextToken();
+    }
     
-    ASTGenerator astgen(lexer.getTokens());
-    astgen.Run();
-    astgen.PrintAST();
-    astgen.CodeGen();
+//    ASTGenerator astgen(lexer.getTokens());
+//    astgen.Run();
+//    astgen.PrintAST();
+//    astgen.CodeGen();
 }

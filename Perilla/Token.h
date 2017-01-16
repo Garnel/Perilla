@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cassert>
 
 using namespace std;
 
@@ -16,10 +17,18 @@ public:
         Extern,
         Ident,
         Number,
-        Unknown
+        Unknown,
+        Eof
     };
+    
+    Token(Type type) noexcept
+    : type(type)
+    {
+        assert(type == Eof);
+    }
 
-    Token(Type type, string cont): type(type), content(move(cont))
+    Token(Type type, string cont) noexcept
+    : type(type), content(move(cont))
     {
         if (type == Number) {
             numericValue = stod(content);
@@ -27,8 +36,45 @@ public:
             character = content[0];
         }
     }
+
+    Token(char ch) noexcept
+    : type(Unknown), content{1, ch}, character(ch) {}
     
-    Token(char ch): type(Unknown), content{1, ch}, character(ch) {}
+    Token(const Token& token) noexcept
+    {
+        type = token.type;
+        content = token.content;
+        numericValue = token.numericValue;
+        character = token.character;
+    }
+    
+    Token(Token&& token) noexcept
+    {
+        type = token.type;
+        swap(content, token.content);
+        numericValue = token.numericValue;
+        character = token.character;
+    }
+    
+    ~Token() = default;
+    
+    Token& operator=(const Token& token) noexcept
+    {
+        type = token.type;
+        content = token.content;
+        numericValue = token.numericValue;
+        character = token.character;
+        return *this;
+    }
+    
+    Token& operator=(Token&& token) noexcept
+    {
+        type = token.type;
+        swap(content, token.content);
+        numericValue = token.numericValue;
+        character = token.character;
+        return *this;
+    }
     
     inline bool IsDef() const
     {
@@ -55,6 +101,11 @@ public:
         return type == Unknown;
     }
     
+    inline bool IsEof() const
+    {
+        return type == Eof;
+    }
+    
     Type GetType() const
     {
         return type;
@@ -75,10 +126,14 @@ public:
         return character;
     }
     
-    bool operator==(const Token& rhs)
+    bool operator==(const Token& rhs) const
     {
         if (type != rhs.type) {
             return false;
+        }
+        
+        if (type == Def || type == Extern || type == Eof) {
+            return true;
         }
         
         if (type == Unknown) {
@@ -87,7 +142,7 @@ public:
         return content == rhs.content;
     }
     
-    bool operator!=(const Token& rhs)
+    bool operator!=(const Token& rhs) const
     {
         return !operator==(rhs);
     }
@@ -111,11 +166,18 @@ public:
             case Token::Unknown:
                 buffer << "unknown " << character;
                 break;
+            case Token::Eof:
+                buffer << "eof";
+                break;
         }
         return buffer.str();
     }
     
     friend ostream& operator<<(ostream& out, Token& token);
+    
+    static const Token DefToken;
+    static const Token ExternToken;
+    static const Token EofToken;
 
 private:
     Type type;
@@ -124,6 +186,10 @@ private:
     char character;
 };
     
+const Token Token::DefToken = {Token::Type::Def, "def"};
+const Token Token::ExternToken = {Token::Type::Extern, "extern"};
+const Token Token::EofToken = {Token::Type::Eof};
+
 ostream& operator<<(ostream& out, Token& token)
 {
     switch (token.GetType()) {
@@ -141,6 +207,9 @@ ostream& operator<<(ostream& out, Token& token)
             break;
         case Token::Unknown:
             out << "unknown " << token.character;
+            break;
+        case Token::Eof:
+            out << "eof";
             break;
     }
     return out;

@@ -6,6 +6,7 @@
 #include "OperatorPrecedence.h"
 #include <exception>
 #include "Utils.h"
+#include "Lexer.h"
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -193,7 +194,7 @@ struct PrototypeAST: ASTNode
         return "Prototype: " + name;
     }
     
-    Function *CodeGen()
+    Function *CodeGen() override
     {
         // Make the function type double(double, double)
         vector<Type*> doubles(args.size(), Type::getDoubleTy(context));
@@ -223,7 +224,7 @@ struct FunctionAST: ASTNode
         return "Function Definition: " + (prototype ? prototype->name : "Anonymouse");
     }
     
-    Function *CodeGen()
+    Function *CodeGen() override
     {
         // First, check for an existing function from a previous 'extern' declaration.
         Function *func = module->getFunction(prototype->name);
@@ -266,8 +267,8 @@ struct FunctionAST: ASTNode
 class ASTGenerator
 {
 public:
-    ASTGenerator(vector<shared_ptr<Token>> ts): tokens(move(ts)), cur(0)  {}
-    
+    ASTGenerator(shared_ptr<Lexer> _lexer): lexer(_lexer) {}
+
     void Run() {
         while (cur < tokens.size()) {
             if (*CurrentToken() == Token{';'}) {
@@ -489,16 +490,7 @@ public:
     }
 
 private:
-    inline shared_ptr<Token> CurrentToken() const {
-        return cur < tokens.size() ? tokens[cur] : nullptr;
-    }
-    
-    inline shared_ptr<Token> NextToken() const {
-        return cur + 1 < tokens.size() ? tokens[cur + 1] : nullptr;
-    }
-    
-    vector<shared_ptr<Token>> tokens;
-    size_t cur;
+    shared_ptr<Lexer> lexer;
     vector<shared_ptr<ASTNode>> astNodes;
 };
 
