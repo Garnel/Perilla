@@ -110,7 +110,9 @@ private:
     void Parse()
     {
         while (isspace(current)) {
-            GetCurrent();
+            if (!GetCurrent()) {
+                return;
+            }
         }
 
         if (isalpha(current)) {
@@ -142,17 +144,6 @@ private:
     
     void ParseNumber()
     {
-        char previous = current;
-        if (!GetCurrent() || !isdigit(current)) {
-            if (isdigit(previous)) {
-                tokens.push_back(Token{Token::Type::Number, string(1, previous)});
-            } else {
-                // '-' not part of the number
-                tokens.push_back(Token {previous});
-            }
-            return;
-        }
-        
         //    +   -   .  e/E  0  1-9
         static const short transformTable[][6] = {
             {-1,  1, -1, -1,  2,  3},  // 0: initial
@@ -165,8 +156,19 @@ private:
             {-1, -1, -1, -1,  8,  8},  // 7: just after '+/-' in exponential part
             {-1, -1, -1, -1,  8,  8}   // 8: terminal, in exponential part
         };
+        
+//        char previous = current;
+//        if (!GetCurrent() || transformTable[0][]) {
+//            if (isdigit(previous)) {
+//                tokens.push_back(Token{Token::Type::Number, string(1, previous)});
+//            } else {
+//                // '-' not part of the number
+//                tokens.push_back(Token {previous});
+//            }
+//            return;
+//        }
 
-        string buffer(1, previous);
+        string buffer;
         short state = 0; // initial state
         while (CurrentValidInNumber()) {
             int inputType = -1;
@@ -186,6 +188,12 @@ private:
             
             buffer += current;
             GetCurrent();
+        }
+        
+        if (buffer == "-" && state == 1) {
+            // only '-'
+            tokens.push_back(Token{'-'});
+            return;
         }
 
 //        if (state == -1 || state == 0 || state == 1 || state == 4 || state == 5 || state == 7) {

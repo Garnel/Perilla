@@ -111,7 +111,7 @@ struct BinaryExprAST: ExprAST
     
     virtual string GetString() override
     {
-        return "Binary Expr: " + string{1, op};
+        return "Binary Expr: " + string(1, op);
     }
     
     virtual Value *CodeGen() override
@@ -191,7 +191,13 @@ struct PrototypeAST: ASTNode
     
     virtual string GetString() override
     {
-        return "Prototype: " + name;
+        string buffer = "Prototype: " + name + "(";
+        for (size_t i = 0; i < args.size(); ++i) {
+            if (i != 0) buffer += " ";
+            buffer += args[i];
+        }
+        buffer += ")";
+        return buffer;
     }
     
     Function *CodeGen() override
@@ -221,7 +227,7 @@ struct FunctionAST: ASTNode
 
     virtual string GetString() override
     {
-        return "Function Definition: " + (prototype ? prototype->name : "Anonymouse");
+        return "Function Definition: " + (prototype ? prototype->GetString() : "Anonymouse");
     }
     
     Function *CodeGen() override
@@ -267,21 +273,22 @@ struct FunctionAST: ASTNode
 class ASTGenerator
 {
 public:
-    ASTGenerator(shared_ptr<Lexer> _lexer): lexer(_lexer) {}
+    ASTGenerator(shared_ptr<Lexer> _lexer): lexer(_lexer), current(Token::EofToken) {}
 
     void Run() {
-        while (cur < tokens.size()) {
-            if (*CurrentToken() == Token{';'}) {
+        GetCurrent();
+        while (current != Token::EofToken) {
+            if (current == Token{';'}) {
                 // ignore toplevel ;
-                ++cur;
+                GetCurrent(); // consume ;
                 continue;
             }
 
-            switch (CurrentToken()->GetType()) {
-                case Token::Def:
+            switch (current.GetType()) {
+                case Token::Type::Def:
                     astNodes.push_back(ParseDefinition());
                     break;
-                case Token::Extern:
+                case Token::Type::Extern:
                     astNodes.push_back(ParseExtern());
                     break;
                 default:
@@ -301,79 +308,74 @@ public:
     void CodeGen() const
     {
         for (auto &node: astNodes) {
-            if (auto *ir = node->CodeGen()) {
-                ir->dump();
-            }
+            node->CodeGen();
+//            if (auto *ir = node->CodeGen()) {
+//                ir->dump();
+//            }
         }
         module->dump();
     }
 
     shared_ptr<ExprAST> ParsePrimary()
     {
-        auto token = CurrentToken();
-        if (!token) {
-            // TODO handle error, unexpected end
-            return nullptr;
-        }
-        auto type = token->GetType();
-        if (type == Token::Type::Number) {
-            // number expression
-            ++cur;
-            return make_shared<NumberExprAST>(token->GetNumeric());
-        } else if (type == Token::Type::Unknown && token->GetChar() == '(') {
+        assert(current != Token::EofToken);
+
+        if (current.IsNumber()) {
+            double value = current.GetNumeric();
+            GetCurrent();
+            return make_shared<NumberExprAST>(value);
+        } else if (current == Token{'('}) {
             // '(' epxression ')'
-            ++cur; // consume '('
+            GetCurrent(); // consume '('
             auto expr = ParseExpr();
-            if (*CurrentToken() != Token{')'}) {
-                // TODO handle error
-                return nullptr;
+            
+            if (current != Token{')'}) {
+                HandleError("Expecting ')'");  // continue parsing
             } else {
-                ++cur; // consume ')'
-                return expr;
+                GetCurrent();
             }
-        } else if (type == Token::Type::Ident) {
-            auto next = NextToken();
-            if (next != nullptr && *next == Token{'('}) {
+            return expr;
+        } else if (current.IsIdent()) {
+            // look forward to determine it's a variable or a function call
+            auto previous = current;
+            if (GetCurrent() && current == Token{'('}) {
                 // function call
-                ++cur; // consume function name
-                ++cur; // consume '('
+                GetCurrent();
                 auto args = ParseArguments();
-                if (*CurrentToken() != Token{')'}) {
-                    // TODO handle error, expecting )
+                
+                if (current != Token{')'}) {
+                    HandleError("Expecting ')'");
                 } else {
-                    ++cur; // consume ')'
-                    return make_shared<CallExprAST>(token->GetContent(), move(args));
+                    GetCurrent();
                 }
-            } else {
-                ++cur;
-                return make_shared<VariableExprAST>(token->GetContent());
+                return make_shared<CallExprAST>(previous.GetContent(), move(args));
             }
+            return make_shared<VariableExprAST>(previous.GetContent());
         }
         
-        // TODO handle error, unknown token when expecting an expression
+        HandleError("Expecting an expression");
         return nullptr;
     }
     
     vector<shared_ptr<ExprAST>> ParseArguments()
     {
         vector<shared_ptr<ExprAST>> args;
-        // empty
-        if (*CurrentToken() == Token{')'}) {
+        // empty arguments
+        if (current == Token{')'}) {
             return args;
         }
 
         while (true) {
             args.push_back(ParseExpr());
 
-            auto token = CurrentToken();
-            if (*token == Token{')'}) {
+            if (current == Token{')'}) {
                 return args;
             }
 
-            if (*token == Token{','}) {
-                ++cur; // consume ','
+            if (current == Token{','}) {
+                GetCurrent(); // consume ','
             } else {
-                // TODO handler error, expecting ,
+                HandleError("Expecting ','");
                 return args;
             }
         }
@@ -387,29 +389,30 @@ public:
     
     shared_ptr<ExprAST> ParseBinRhs(int precedence, shared_ptr<ExprAST> lhs)
     {
-        auto prev = CurrentToken();
-        if (!prev || !prev->IsUnknown()) {
+        auto previous = current;
+        if (!previous.IsUnknown()) {
+//            HandleError("Expecting a binary operator");
             return lhs;
         }
 
-        if (BinaryOperatorPrecedence::Support(prev->GetChar())) {
-            int prevPrec = BinaryOperatorPrecedence::Get(prev->GetChar());
+        if (BinaryOperatorPrecedence::Support(previous.GetChar())) {
+            int prevPrec = BinaryOperatorPrecedence::Get(previous.GetChar());
             if (prevPrec < precedence) {
                 return lhs;
             } else {
-                ++cur; // consume operator
+                GetCurrent(); // consume binary operator
                 auto rhs = ParsePrimary();
-                auto cur = CurrentToken();
-                if (cur && cur->IsUnknown() && BinaryOperatorPrecedence::Support(cur->GetChar())) {
-                    int curPrec = BinaryOperatorPrecedence::Get(cur->GetChar());
+                if (current.IsUnknown() && BinaryOperatorPrecedence::Support(current.GetChar())) {
+                    int curPrec = BinaryOperatorPrecedence::Get(current.GetChar());
                     if (prevPrec < curPrec) {
                         rhs = ParseBinRhs(prevPrec + 1, rhs);
                     }
                 }
-                lhs = make_shared<BinaryExprAST>(prev->GetChar(), lhs, rhs);
+                lhs = make_shared<BinaryExprAST>(previous.GetChar(), lhs, rhs);
                 return ParseBinRhs(precedence, lhs);
             }
         } else {
+//            HandleError("Unsupported binary operator " + previous.GetContent());
             return lhs;
         }
     }
@@ -417,49 +420,43 @@ public:
     shared_ptr<PrototypeAST> ParsePrototype()
     {
         // id '(' id* ')'
-        auto funcToken = CurrentToken();
-        if (!funcToken->IsIdent()) {
-            // TODO expecting function name
+        assert(current.IsIdent());
+
+        auto funcToken = current;
+        GetCurrent(); // consume the function name
+        if (current != Token{'('}) {
+            HandleError("Expection '('");
             return nullptr;
         }
+        GetCurrent(); // consume (
         
-        ++cur; // consume func name
-        if (*CurrentToken() != Token{'('}) {
-            // TODO expecting (
-            return nullptr;
-        }
-        ++cur; // consume (
-        
-        vector<string> argNames;
-        if (*CurrentToken() != Token{')'}) {
+        vector<string> args;
+        if (current != Token{')'}) {
             while (true) {
-                if (!CurrentToken()->IsIdent()) {
-                    // TODO expecting argument name
+                if (!current.IsIdent()) {
+                    HandleError("Expecting an ident");
                     break;
                 }
-                argNames.push_back(CurrentToken()->GetContent());
-                ++cur; // consume the argument name
+                args.push_back(current.GetContent());
+                GetCurrent(); //consume argument name
                 
-                if (*CurrentToken() == Token{')'}) {
-                    ++cur; // consume )
+                if (current == Token{')'}) {
+                    GetCurrent(); // consume )
                     break;
                 }
             }
         } else {
-            ++cur; // consume )
+            GetCurrent(); // consume )
         }
         
-        return make_shared<PrototypeAST>(funcToken->GetContent(), argNames);
+        return make_shared<PrototypeAST>(funcToken.GetContent(), args);
     }
     
     shared_ptr<FunctionAST> ParseDefinition()
     {
-        if (!CurrentToken()->IsDef()) {
-            // TODO expecting def
-            return nullptr;
-        }
+        assert(current.IsDef());
         
-        ++cur; // consume def
+        GetCurrent(); // consume def
         auto proto = ParsePrototype();
         auto body = ParseExpr();
         return make_shared<FunctionAST>(proto, body);
@@ -467,12 +464,9 @@ public:
     
     shared_ptr<PrototypeAST> ParseExtern()
     {
-        if (!CurrentToken()->IsExtern()) {
-            // TODO expecting extern
-            return nullptr;
-        }
+        assert(current.IsExtern());
         
-        ++cur; // consume extern
+        GetCurrent(); // consume extern
         return ParsePrototype();
     }
     
@@ -490,8 +484,23 @@ public:
     }
 
 private:
+    void HandleError(string errorMessage)
+    {
+        cout << errorMessage << endl;
+    }
+    
+    bool GetCurrent()
+    {
+        if (lexer) {
+            current = lexer->NextToken();
+            return current != Token::EofToken;
+        }
+        return false;
+    }
+    
     shared_ptr<Lexer> lexer;
     vector<shared_ptr<ASTNode>> astNodes;
+    Token current;
 };
 
 };

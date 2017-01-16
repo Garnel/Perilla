@@ -38,7 +38,7 @@ public:
     }
 
     Token(char ch) noexcept
-    : type(Unknown), content{1, ch}, character(ch) {}
+    : type(Unknown), content(1, ch), character(ch) {}
     
     Token(const Token& token) noexcept
     {
@@ -106,22 +106,22 @@ public:
         return type == Eof;
     }
     
-    Type GetType() const
+    inline Type GetType() const
     {
         return type;
     }
     
-    string GetContent() const
+    inline string GetContent() const
     {
         return content;
     }
     
-    double GetNumeric() const
+    inline double GetNumeric() const
     {
         return numericValue;
     }
     
-    char GetChar() const
+    inline char GetChar() const
     {
         return character;
     }
